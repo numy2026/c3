@@ -5,6 +5,41 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Калькулятор</title>
     <style>
+        :root {
+            --body-bg: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            --calc-bg: #ffffff;
+            --calc-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            --display-bg: #1a1a1a;
+            --display-color: #ffffff;
+            --button-bg: #f0f0f0;
+            --button-color: #333333;
+            --button-hover: #e0e0e0;
+            --operator-bg: #667eea;
+            --operator-hover: #5568d3;
+            --equals-bg: #764ba2;
+            --equals-hover: #653a8a;
+            --clear-bg: #ff6b6b;
+            --clear-hover: #ee5a5a;
+        }
+
+        /* Темная тема */
+        body[data-theme="dark"] {
+            --body-bg: linear-gradient(135deg, #0f2027 0%, #203a43 50%, #2c5364 100%);
+            --calc-bg: #0f172a;
+            --calc-shadow: 0 20px 60px rgba(0, 0, 0, 0.6);
+            --display-bg: #0b1220;
+            --display-color: #e5e7eb;
+            --button-bg: #1f2937;
+            --button-color: #e5e7eb;
+            --button-hover: #111827;
+            --operator-bg: #2563eb;
+            --operator-hover: #1d4ed8;
+            --equals-bg: #7c3aed;
+            --equals-hover: #6d28d9;
+            --clear-bg: #dc2626;
+            --clear-hover: #b91c1c;
+        }
+
         * {
             margin: 0;
             padding: 0;
@@ -17,22 +52,46 @@
             justify-content: center;
             align-items: center;
             min-height: 100vh;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: var(--body-bg);
             padding: 20px;
+            transition: background 0.3s ease;
         }
 
         .calculator {
-            background: #ffffff;
+            position: relative;
+            background: var(--calc-bg);
             border-radius: 20px;
-            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            box-shadow: var(--calc-shadow);
             padding: 30px;
             max-width: 400px;
             width: 100%;
+            transition: background 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .theme-toggle {
+            position: absolute;
+            top: 12px;
+            right: 12px;
+            width: 42px;
+            height: 42px;
+            border-radius: 50%;
+            border: none;
+            background: var(--button-bg);
+            color: var(--button-color);
+            font-size: 1.1rem;
+            cursor: pointer;
+            box-shadow: 0 6px 16px rgba(0, 0, 0, 0.15);
+            transition: background 0.2s ease, transform 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        .theme-toggle:hover {
+            background: var(--button-hover);
+            transform: translateY(-2px);
         }
 
         .display {
-            background: #1a1a1a;
-            color: #ffffff;
+            background: var(--display-bg);
+            color: var(--display-color);
             font-size: 2.5rem;
             padding: 20px;
             text-align: right;
@@ -44,6 +103,7 @@
             justify-content: flex-end;
             word-wrap: break-word;
             overflow-wrap: break-word;
+            transition: background 0.3s ease, color 0.3s ease;
         }
 
         .buttons {
@@ -53,7 +113,7 @@
         }
 
         button {
-            background: #f0f0f0;
+            background: var(--button-bg);
             border: none;
             border-radius: 10px;
             font-size: 1.5rem;
@@ -61,11 +121,11 @@
             cursor: pointer;
             transition: all 0.2s;
             font-weight: 600;
-            color: #333;
+            color: var(--button-color);
         }
 
         button:hover {
-            background: #e0e0e0;
+            background: var(--button-hover);
             transform: translateY(-2px);
             box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
         }
@@ -76,30 +136,30 @@
         }
 
         .operator {
-            background: #667eea;
+            background: var(--operator-bg);
             color: #ffffff;
         }
 
         .operator:hover {
-            background: #5568d3;
+            background: var(--operator-hover);
         }
 
         .equals {
-            background: #764ba2;
+            background: var(--equals-bg);
             color: #ffffff;
         }
 
         .equals:hover {
-            background: #653a8a;
+            background: var(--equals-hover);
         }
 
         .clear {
-            background: #ff6b6b;
+            background: var(--clear-bg);
             color: #ffffff;
         }
 
         .clear:hover {
-            background: #ee5a5a;
+            background: var(--clear-hover);
         }
 
         .zero {
@@ -109,6 +169,7 @@
 </head>
 <body>
     <div class="calculator">
+        <button class="theme-toggle" id="theme-toggle" aria-label="Переключить тему">🌙</button>
         <div class="display" id="display">0</div>
         <div class="buttons">
             <button class="clear" onclick="clearDisplay()">C</button>
@@ -140,6 +201,28 @@
         let display = document.getElementById('display');
         let currentInput = '0';
         let shouldResetDisplay = false;
+        const themeToggle = document.getElementById('theme-toggle');
+
+        function applyTheme(theme) {
+            document.body.setAttribute('data-theme', theme);
+            themeToggle.textContent = theme === 'dark' ? '☀️' : '🌙';
+            localStorage.setItem('calc-theme', theme);
+        }
+
+        function initTheme() {
+            const saved = localStorage.getItem('calc-theme');
+            const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+            const startTheme = saved || (prefersDark ? 'dark' : 'light');
+            applyTheme(startTheme);
+        }
+
+        themeToggle.addEventListener('click', () => {
+            const currentTheme = document.body.getAttribute('data-theme') === 'dark' ? 'dark' : 'light';
+            const nextTheme = currentTheme === 'dark' ? 'light' : 'dark';
+            applyTheme(nextTheme);
+        });
+
+        initTheme();
 
         function updateDisplay() {
             display.textContent = currentInput;
