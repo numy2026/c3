@@ -165,6 +165,72 @@
         .zero {
             grid-column: span 2;
         }
+
+        .history {
+            margin-top: 20px;
+            background: rgba(0, 0, 0, 0.03);
+            border-radius: 12px;
+            padding: 12px;
+            max-height: 200px;
+            overflow-y: auto;
+            transition: background 0.3s ease;
+        }
+
+        body[data-theme="dark"] .history {
+            background: rgba(255, 255, 255, 0.04);
+        }
+
+        .history-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 10px;
+            font-weight: 700;
+            color: var(--button-color);
+        }
+
+        .history-clear {
+            background: transparent;
+            color: var(--button-color);
+            font-size: 0.9rem;
+            padding: 6px 10px;
+            border-radius: 8px;
+            box-shadow: none;
+        }
+
+        .history-clear:hover {
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+        }
+
+        .history-list {
+            list-style: none;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .history-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 8px 10px;
+            border-radius: 8px;
+            background: var(--button-bg);
+            color: var(--button-color);
+            box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
+            font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', monospace;
+            font-size: 0.95rem;
+            transition: background 0.2s ease, color 0.2s ease;
+        }
+
+        .history-item .expr {
+            margin-right: 12px;
+            opacity: 0.8;
+        }
+
+        .history-item .res {
+            font-weight: 700;
+        }
     </style>
 </head>
 <body>
@@ -195,6 +261,13 @@
             <button class="zero" onclick="appendNumber('0')">0</button>
             <button onclick="appendDecimal()">.</button>
         </div>
+        <div class="history">
+            <div class="history-header">
+                <span>Журнал операций</span>
+                <button class="history-clear" onclick="clearHistory()">Очистить</button>
+            </div>
+            <ul class="history-list" id="history-list"></ul>
+        </div>
     </div>
 
     <script>
@@ -202,6 +275,7 @@
         let currentInput = '0';
         let shouldResetDisplay = false;
         const themeToggle = document.getElementById('theme-toggle');
+        const historyList = document.getElementById('history-list');
 
         function applyTheme(theme) {
             document.body.setAttribute('data-theme', theme);
@@ -223,6 +297,32 @@
         });
 
         initTheme();
+
+        function addHistoryEntry(expression, result) {
+            const item = document.createElement('li');
+            item.className = 'history-item';
+
+            const exprSpan = document.createElement('span');
+            exprSpan.className = 'expr';
+            exprSpan.textContent = expression;
+
+            const resSpan = document.createElement('span');
+            resSpan.className = 'res';
+            resSpan.textContent = result;
+
+            item.appendChild(exprSpan);
+            item.appendChild(resSpan);
+
+            historyList.prepend(item);
+
+            if (historyList.children.length > 10) {
+                historyList.removeChild(historyList.lastChild);
+            }
+        }
+
+        function clearHistory() {
+            historyList.innerHTML = '';
+        }
 
         function updateDisplay() {
             display.textContent = currentInput;
@@ -270,6 +370,7 @@
 
         function calculate() {
             try {
+                const originalInput = currentInput;
                 // Заменяем × на * для вычисления
                 let expression = currentInput.replace(/×/g, '*');
                 
@@ -291,6 +392,11 @@
                 
                 updateDisplay();
                 shouldResetDisplay = true;
+
+                if (currentInput !== 'Ошибка') {
+                    const prettyExpression = originalInput.replace(/\*/g, '×');
+                    addHistoryEntry(prettyExpression, result.toString());
+                }
             } catch (error) {
                 currentInput = 'Ошибка';
                 updateDisplay();
